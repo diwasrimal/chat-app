@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chat Server</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./script.js"></script>
+</head>
+<body>
+
+  <!-- Register username here -->
+  <div id="name-entry">
+    <input type="text" id="username" placeholder="Your Username">
+    <button id="confirm-username">Enter</button>
+  </div>
+
+  <!-- Area to join room or create new one -->
+  <div id="create-join-area" class="hidden">
+    <input id="room-id-input" placeholder="Room id to join">
+    <button id="join-room">Join</button>
+    <button id="create-room">Create</button>
+  </div>
+
+  <!-- Loading animation -->
+  <div class="spinning-animation hidden">
+    spinner
+<!--     <div class="container">
+      <div class="spinner">
+        <div class="spinner">
+          <div class="spinner">
+          </div>
+        </div>
+      </div>
+    </div> -->
+  </div>
+
+  <div id="chat-page" class="chat-page hidden">
+    <h1>Chat page</h1>
+    <div>Room Id: <span id="room-id-display"></span></div>
+    <div>Host: <span id="room-hostname"></span></div>
+    <div>
+      Members:
+      <ul id="room-member-list"></ul>
+    <div>
+    <div id="chat-area" class="hidden">
+      <ul id="chat-box"></ul>
+    </div>
+  </div>
+
+
+</body>
+</html>
