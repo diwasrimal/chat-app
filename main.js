@@ -9,6 +9,7 @@ const server = new HttpServer(port);
 let connections = {};
 let rooms = {};
 let usernames = {};
+let enteredRoomId = "";
 
 const ws = new WebSocketServer({server: server.server});
 
@@ -49,12 +50,14 @@ ws.on("connection", (conn) => {
             }));
             break;
 
-        // Client requests for creating a new room, client will be room host
+        // Client requests for creating a new room, roomId is same as hostId
+        // and hostId is the clientId of client that creates the room initially.
         case "createRequest":
             const hostId = clientId;
             console.log(`${usernames[hostId]} is creating a room..`);
             // TODO: handle multiple room creations with multiple button clicks from client
             rooms[hostId] = new Room(hostId);
+            enteredRoomId = hostId;
             conn.send(JSON.stringify({
                 type: "createResponse",
                 success: true,
@@ -78,6 +81,7 @@ ws.on("connection", (conn) => {
             }
             // Join successful
             room.add(clientId);
+            enteredRoomId = data.roomId;
             console.log(`${usernames[clientId]} joins ${usernames[room.host]}'s room`);
             conn.send(JSON.stringify({
                 type: "joinResponse",
@@ -97,6 +101,24 @@ ws.on("connection", (conn) => {
             }
             break;
 
+        // Broadcast message to room members when somebody sends a message
+        case "chatMessageRequest":
+            for (const id of rooms[enteredRoomId].members) {
+                console.log(id);
+                if (id === clientId) continue;
+                connections[id].send(JSON.stringify({
+                    type: "chatMessageResponse",
+                    message: data.message,
+                    sender: usernames[clientId],
+                }))
+            }
+            // Notify sender that message was sent
+            conn.send(JSON.stringify({
+                type: "messageSentStatus",
+                success: true,
+            }))
+            break;
+
         default:
             console.error("Message type unknown");
         }
@@ -112,6 +134,7 @@ ws.on("connection", (conn) => {
         delete connections[clientId];
         delete usernames[clientId];
         delete rooms[clientId];
+        enteredRoomId = "";
         // TODO: remove client from memberlist of his/her room
         // TODO: notify room members that client has left
     })

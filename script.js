@@ -9,6 +9,10 @@ const roomIdDisplay = document.querySelector("#room-id-display")
 const chatPage = document.querySelector("#chat-page");
 const roomMemberList = document.querySelector("#room-member-list");
 const roomHostNameSpan = document.querySelector("#room-hostname");
+const chatMessageInput = document.querySelector("#chat-message");
+const sendMessagButton = document.querySelector("#send-message");
+const messageStatusSpan = document.querySelector("#message-status")
+const chatList = document.querySelector("#chat-list")
 const spinner = document.querySelector(".spinning-animation");
 
 const socketProtocol = location.protocol === "https:" ? "wss:" : "ws:";
@@ -66,9 +70,21 @@ socket.onmessage = (message) => {
 
     // New member joins the room
     case "newMemberJoin":
-        const el = document.createElement("li");
-        el.innerHTML = data.username;
-        roomMemberList.insertBefore(el, roomMemberList.firstChild);
+        const newMem = document.createElement("li");
+        newMem.innerHTML = data.username;
+        roomMemberList.insertBefore(newMem, roomMemberList.firstChild);
+        break;
+
+    // Somebody sends a message to the group
+    case "chatMessageResponse":
+        const msg = document.createElement("li");
+        msg.innerHTML = `${data.sender}: &nbsp &nbsp ${data.message}`;
+        chatList.appendChild(msg);
+        break;
+
+    // Status of last sent message
+    case "messageSentStatus":
+        messageStatusSpan.innerHTML = data.success ? "Sent" : "Failed"
         break;
 
     // Response of trying to join an existing room
@@ -122,4 +138,17 @@ joinButton.onclick = (e) => {
     }))
     hide(createJoinArea, nameEntryArea);
     show(spinner);
+}
+
+sendMessagButton.onclick = (e) => {
+    const message = chatMessageInput.value.trim();
+    if (!message) return;
+    socket.send(JSON.stringify({
+        type: "chatMessageRequest",
+        message: message,
+    }))
+    const el = document.createElement("li");
+    el.innerHTML = `You: &nbsp &nbsp ${message}`;
+    chatList.appendChild(el);
+    messageStatusSpan.innerHTML = "Sending...";
 }
