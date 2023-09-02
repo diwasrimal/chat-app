@@ -6,9 +6,19 @@ const { HttpServer } = require("./server");
 const port = process.env.PORT || 3000;
 const server = new HttpServer(port);
 
+// Below objects will store state of the server
+// Every object's key is client's id
+
+// Stores the connection made with each client
 let connections = {};
+
+// Stores the rooms created (room id is room's host's id)
 let rooms = {};
+
+// Stores usernames of each client
 let usernames = {};
+
+// Stores the room id that a client is in
 let enteredRoomId = {};
 
 const ws = new WebSocketServer({server: server.server});
