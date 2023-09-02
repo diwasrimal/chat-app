@@ -65,7 +65,7 @@ ws.on("connection", (conn) => {
         case "createRequest":
             const hostId = clientId;
             console.log(`${usernames[hostId]} is creating a room..`);
-            // TODO: handle multiple room creations with multiple button clicks from client
+            // TODO: use different ids for rooms
             rooms[hostId] = new Room(hostId);
             enteredRoomId[clientId] = hostId;
             conn.send(JSON.stringify({
@@ -140,26 +140,51 @@ ws.on("connection", (conn) => {
     conn.on("error", console.error);
 
     conn.on("close", () => {
-        // Remove client from memberlist of his/her room
-        if (enteredRoomId[clientId] !== "") {
-            rooms[enteredRoomId[clientId]].members = rooms[enteredRoomId[clientId]].members.filter(memId => memId !== clientId);
-            for (const id of rooms[enteredRoomId[clientId]].members) {
-                connections[id].send(JSON.stringify({
-                    type: "memberLeave",
-                    username: usernames[clientId],
-                }));
-            }
-
-            // If the exiting member is host, delete the room
-            if (rooms[enteredRoomId[clientId]].host === clientId)
-                delete rooms[clientId];
-
-            delete enteredRoomId[clientId];
-        }
-
-        console.log(`${usernames[clientId]} left!`);
+        // Delete clients username and connection
+        const clientName = usernames[clientId];
+        console.log(`${clientName} left!`);
         delete usernames[clientId];
         delete connections[clientId];
+
+        const insideRoom = enteredRoomId[clientId] !== undefined;
+        if (!insideRoom) {
+            logData();
+            return;
+        }
+
+        // Remove client from room's member list and notify other users
+        const enteredRoom = rooms[enteredRoomId[clientId]];
+        delete enteredRoomId[clientId];
+        enteredRoom.members = enteredRoom.members.filter(memId => memId !== clientId);
+        for (const id of enteredRoom.members) {
+            connections[id].send(JSON.stringify({
+                type: "memberLeave",
+                username: clientName,
+            }));
+        }
+
+        // Check if leaving client is the room's host
+        if (clientId !== enteredRoom.host) {
+            logData();
+            return;
+        }
+
+        // If yes, delete the room if no members left in room, else assign a new host
+        if (enteredRoom.members.length === 0) {
+            delete rooms[enteredRoom.host];
+            logData();
+            return;
+        }
+
+        const newHostId = enteredRoom.members[0];
+        enteredRoom.host = newHostId;
+        for (const id of enteredRoom.members) {
+            connections[id].send(JSON.stringify({
+                type: "hostChange",
+                newHost: usernames[newHostId],
+            }));
+        }
+
         logData();
     })
 

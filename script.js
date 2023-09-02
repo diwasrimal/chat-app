@@ -99,7 +99,10 @@ socket.onmessage = (message) => {
         }
         break;
 
-    // Response of trying to join an existing room
+    case "hostChange":
+        roomHostNameSpan.innerHTML = data.newHost;
+        break;
+
     default:
         console.log("Unrecognized message type");
     }
