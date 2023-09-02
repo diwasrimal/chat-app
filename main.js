@@ -9,7 +9,7 @@ const server = new HttpServer(port);
 let connections = {};
 let rooms = {};
 let usernames = {};
-let enteredRoomId = "";
+let enteredRoomId = {};
 
 const ws = new WebSocketServer({server: server.server});
 
@@ -57,7 +57,7 @@ ws.on("connection", (conn) => {
             console.log(`${usernames[hostId]} is creating a room..`);
             // TODO: handle multiple room creations with multiple button clicks from client
             rooms[hostId] = new Room(hostId);
-            enteredRoomId = hostId;
+            enteredRoomId[clientId] = hostId;
             conn.send(JSON.stringify({
                 type: "createResponse",
                 success: true,
@@ -81,7 +81,7 @@ ws.on("connection", (conn) => {
             }
             // Join successful
             room.add(clientId);
-            enteredRoomId = data.roomId;
+            enteredRoomId[clientId] = data.roomId;
             console.log(`${usernames[clientId]} joins ${usernames[room.host]}'s room`);
             conn.send(JSON.stringify({
                 type: "joinResponse",
@@ -103,7 +103,7 @@ ws.on("connection", (conn) => {
 
         // Broadcast message to room members when somebody sends a message
         case "chatMessageRequest":
-            for (const id of rooms[enteredRoomId].members) {
+            for (const id of rooms[enteredRoomId[clientId]].members) {
                 console.log(id);
                 if (id === clientId) continue;
                 connections[id].send(JSON.stringify({
@@ -131,9 +131,9 @@ ws.on("connection", (conn) => {
 
     conn.on("close", () => {
         // Remove client from memberlist of his/her room
-        if (enteredRoomId !== "") {
-            rooms[enteredRoomId].members = rooms[enteredRoomId].members.filter(memId => memId !== clientId);
-            for (const id of rooms[enteredRoomId].members) {
+        if (enteredRoomId[clientId] !== "") {
+            rooms[enteredRoomId[clientId]].members = rooms[enteredRoomId[clientId]].members.filter(memId => memId !== clientId);
+            for (const id of rooms[enteredRoomId[clientId]].members) {
                 connections[id].send(JSON.stringify({
                     type: "memberLeave",
                     username: usernames[clientId],
@@ -141,10 +141,10 @@ ws.on("connection", (conn) => {
             }
 
             // If the exiting member is host, delete the room
-            if (rooms[enteredRoomId].host === clientId)
+            if (rooms[enteredRoomId[clientId]].host === clientId)
                 delete rooms[clientId];
 
-            enteredRoomId = "";
+            delete enteredRoomId[clientId];
         }
 
         console.log(`${usernames[clientId]} left!`);
