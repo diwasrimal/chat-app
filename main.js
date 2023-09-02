@@ -130,13 +130,27 @@ ws.on("connection", (conn) => {
     conn.on("error", console.error);
 
     conn.on("close", () => {
+        // Remove client from memberlist of his/her room
+        if (enteredRoomId !== "") {
+            rooms[enteredRoomId].members = rooms[enteredRoomId].members.filter(memId => memId !== clientId);
+            for (const id of rooms[enteredRoomId].members) {
+                connections[id].send(JSON.stringify({
+                    type: "memberLeave",
+                    username: usernames[clientId],
+                }));
+            }
+
+            // If the exiting member is host, delete the room
+            if (rooms[enteredRoomId].host === clientId)
+                delete rooms[clientId];
+
+            enteredRoomId = "";
+        }
+
         console.log(`${usernames[clientId]} left!`);
-        delete connections[clientId];
         delete usernames[clientId];
-        delete rooms[clientId];
-        enteredRoomId = "";
-        // TODO: remove client from memberlist of his/her room
-        // TODO: notify room members that client has left
+        delete connections[clientId];
+        logData();
     })
 
 })

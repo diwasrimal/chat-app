@@ -87,6 +87,18 @@ socket.onmessage = (message) => {
         messageStatusSpan.innerHTML = data.success ? "Sent" : "Failed"
         break;
 
+    // Update member list when someoone leaves
+    // TODO: Use id rather than name of the person
+    case "memberLeave":
+        for (const child of roomMemberList.children) {
+            const leavingUser = data.username;
+            if (child.innerHTML === leavingUser) {
+                roomMemberList.removeChild(child);
+                break;
+            }
+        }
+        break;
+
     // Response of trying to join an existing room
     default:
         console.log("Unrecognized message type");
