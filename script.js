@@ -10,7 +10,7 @@ const chatPage = document.querySelector("#chat-page");
 const roomMemberList = document.querySelector("#room-member-list");
 const roomHostNameSpan = document.querySelector("#room-hostname");
 const chatMessageInput = document.querySelector("#chat-message");
-const sendMessagButton = document.querySelector("#send-message");
+const sendMessageButton = document.querySelector("#send-message");
 const messageStatusSpan = document.querySelector("#message-status")
 const chatList = document.querySelector("#chat-list")
 const spinner = document.querySelector(".spinning-animation");
@@ -140,7 +140,7 @@ joinButton.onclick = (e) => {
     show(spinner);
 }
 
-sendMessagButton.onclick = (e) => {
+sendMessageButton.onclick = (e) => {
     const message = chatMessageInput.value.trim();
     if (!message) return;
     socket.send(JSON.stringify({
